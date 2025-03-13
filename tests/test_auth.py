@@ -98,3 +98,24 @@ def test_register_without_password(client):
         ]
     }
 
+def test_register_invalid_email_format(client):
+    response = client.post("/register", json={
+        "data": {
+            "attributes": {
+                "email": "testingemail.com",
+                "password": "securepassword",
+            }
+        }
+    })
+
+    assert response.status_code == 400
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Provided email is not an email address",
+                "errorCode": "TFAE1",
+                "errorHandling": "Please provide a valid parameter."
+            }
+        ]
+    }
+
