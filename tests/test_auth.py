@@ -308,3 +308,25 @@ def test_verify_otp_success(client, mocker):
     assert "access_token" in response.json
     assert response.json["access_token"] == "mocked_jwt_token"
 
+def test_dashboard_with_invalid_jwt_token(client):
+    user = User(email="test@example.com", username="testuser", password="hashedpassword")
+    db.session.add(user)
+    db.session.commit()
+    
+    access_token = create_access_token(identity="randomemail@email.com")
+    response = client.get(
+        "/dashboard",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    assert response.status_code == 401
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Invalid JWT Token",
+                "errorCode": "TFAE3",
+                "errorHandling": "Please provide correct credentials"
+            }
+        ]
+    }
+
