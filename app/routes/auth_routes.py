@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app import db, bcrypt, errors
+from app import db, bcrypt, errors, limiter
 from app.models import User
 from app.services.email_service import send_email
 from app.services.user_service import generate_username
@@ -47,6 +47,7 @@ def register():
     ), 201
 
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def login():
     params = validate_json_api_params(request.json)
 
