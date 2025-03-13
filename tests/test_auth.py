@@ -60,3 +60,41 @@ def test_register_without_email(client):
         ]
     }
 
+def test_register_without_password(client):
+    response = client.post("/register", json={
+        "data": {
+            "attributes": {
+                "email": "test@gmail.com",
+                "password" : ""
+            }
+        }
+    })
+    assert response.status_code == 400
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Email and password required",
+                "errorCode": "TFAE2",
+                "errorHandling": "Please include the missing parameter."
+            }
+        ]
+    }
+
+    response = client.post("/register", json={
+        "data": {
+            "attributes": {
+                "email": "test@gmail.com"
+            }
+        }
+    })
+    assert response.status_code == 400
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Email and password required",
+                "errorCode": "TFAE2",
+                "errorHandling": "Please include the missing parameter."
+            }
+        ]
+    }
+
