@@ -62,3 +62,16 @@ def login():
     send_email.delay(email, "Your OTP Code", f"Your OTP is: {otp}")
 
     return jsonify({"message": "OTP sent to email"}), 200
+
+@auth_bp.route("/verify-otp", methods=["POST"])
+def verify_otp_route():
+    params = validate_json_api_params(request.json)
+
+    email = params.get("email")
+    otp = params.get("otp")
+
+    if verify_otp(email, otp):
+        access_token = create_access_token(identity=email)
+        return jsonify({"access_token": access_token}), 200
+    else:
+        raise errors.UnauthorizedError("Invalid or expired OTP")
