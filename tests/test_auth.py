@@ -175,3 +175,26 @@ def test_register_existing_username(client, mocker):
         ]
     }
 
+def test_register_success(client, mocker):
+    mocker.patch("app.routes.auth_routes.generate_username", return_value="testuser")
+
+    response = client.post("/register", json={
+        "data": {
+            "attributes": {
+                "email": "test@example.com",
+                "password": "securepassword"
+            }
+        }
+    })
+
+    assert User.query.count() == 1
+    assert response.status_code == 201
+    assert response.json == {
+        "data": {
+            "id": User.query.first().id,
+            "attributes": {
+                "username": "testuser"
+            }
+        }
+    }
+
