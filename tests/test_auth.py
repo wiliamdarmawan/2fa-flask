@@ -219,3 +219,28 @@ def test_login_user_not_found(client):
         ]
     }
 
+def test_login_with_wrong_password(client):
+    user = User(email="test@example.com", username="testuser", password=bcrypt.generate_password_hash("randompassword").decode("utf-8"))
+    db.session.add(user)
+    db.session.commit()
+
+    response = client.post("/login", json={
+        "data": {
+            "attributes": {
+                "email": "test@example.com",
+                "password": "securepassword"
+            }
+        }
+    })
+
+    assert response.status_code == 401
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Invalid credentials",
+                "errorCode": "TFAE3",
+                "errorHandling": "Please provide correct credentials"
+            }
+        ]
+    }
+
