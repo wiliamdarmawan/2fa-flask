@@ -330,3 +330,20 @@ def test_dashboard_with_invalid_jwt_token(client):
         ]
     }
 
+def test_dashboard_protected_success(client):
+    user = User(email="test@example.com", username="testuser", password="hashedpassword")
+    db.session.add(user)
+    db.session.commit()
+    
+    access_token = create_access_token(identity=user.email)
+    
+    response = client.get(
+        "/dashboard",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    assert response.status_code == 200
+    assert response.json == {
+        "status": "success",
+        "message": f"Hey {user.username}, you are welcome"
+    }
