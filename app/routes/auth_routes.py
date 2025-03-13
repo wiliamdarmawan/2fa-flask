@@ -75,3 +75,18 @@ def verify_otp_route():
         return jsonify({"access_token": access_token}), 200
     else:
         raise errors.UnauthorizedError("Invalid or expired OTP")
+
+# Protected route
+@auth_bp.route("/dashboard", methods=["GET"])
+@jwt_required()
+def dashboard():
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(email=current_user).first()
+
+    if not user:
+        raise errors.UnauthorizedError("Invalid JWT Token")
+    
+    return jsonify({
+        "status": "success",
+        "message": f"Hey {user.username}, you are welcome"
+    }), 200
