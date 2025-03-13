@@ -291,3 +291,20 @@ def test_invalid_otp_given_on_verify_otp(client, mocker):
         ]
     }
 
+def test_verify_otp_success(client, mocker):
+    mocker.patch("app.routes.auth_routes.verify_otp", return_value=True)
+    mocker.patch("app.routes.auth_routes.create_access_token", return_value="mocked_jwt_token")
+
+    response = client.post("/verify-otp", json={
+        "data": {
+            "attributes": {
+                "email": "test@example.com",
+                "otp": "123456"
+            }
+        }
+    })
+
+    assert response.status_code == 200
+    assert "access_token" in response.json
+    assert response.json["access_token"] == "mocked_jwt_token"
+
