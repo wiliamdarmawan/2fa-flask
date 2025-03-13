@@ -198,3 +198,24 @@ def test_register_success(client, mocker):
         }
     }
 
+def test_login_user_not_found(client):
+    response = client.post("/login", json={
+        "data": {
+            "attributes": {
+                "email": "foo",
+                "password" : "bar"
+            }
+        }
+    })
+
+    assert response.status_code == 401
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Invalid credentials",
+                "errorCode": "TFAE3",
+                "errorHandling": "Please provide correct credentials"
+            }
+        ]
+    }
+
