@@ -268,3 +268,26 @@ def test_login_success(client, mocker):
     mock_store_otp.assert_called_once()
     mock_send_email.assert_called_once()
 
+def test_invalid_otp_given_on_verify_otp(client, mocker):
+    mocker.patch("app.routes.auth_routes.verify_otp", return_value=False)
+
+    response = client.post("/verify-otp", json={
+        "data": {
+            "attributes": {
+                "email": "test@example.com",
+                "otp": "123456"
+            }
+        }
+    })
+
+    assert response.status_code == 401
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Invalid or expired OTP",
+                "errorCode": "TFAE3",
+                "errorHandling": "Please provide correct credentials"
+            }
+        ]
+    }
+
