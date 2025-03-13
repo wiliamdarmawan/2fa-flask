@@ -244,3 +244,27 @@ def test_login_with_wrong_password(client):
         ]
     }
 
+def test_login_success(client, mocker):
+    mocker.patch("app.routes.auth_routes.generate_otp", return_value="123456")
+    mock_store_otp = mocker.patch("app.routes.auth_routes.store_otp")
+    mock_send_email = mocker.patch("app.routes.auth_routes.send_email.delay")
+
+    password = "securepassword"
+    user = User(email="test@example.com", username="testuser", password=bcrypt.generate_password_hash(password).decode("utf-8"))
+    db.session.add(user)
+    db.session.commit()
+
+    response = client.post("/login", json={
+        "data": {
+            "attributes": {
+                "email": "test@example.com",
+                "password": password
+            }
+        }
+    })
+
+    assert response.status_code == 200
+    assert response.json["message"] == "OTP sent to email"
+    mock_store_otp.assert_called_once()
+    mock_send_email.assert_called_once()
+
