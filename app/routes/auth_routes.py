@@ -45,3 +45,20 @@ def register():
             }
         }
     ), 201
+
+@auth_bp.route("/login", methods=["POST"])
+def login():
+    params = validate_json_api_params(request.json)
+
+    email = params.get("email")
+    password = params.get("password")
+
+    user = User.query.filter_by(email=email).first()
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        raise errors.UnauthorizedError("Invalid credentials")
+
+    otp = generate_otp()
+    store_otp(email, otp)
+    send_email.delay(email, "Your OTP Code", f"Your OTP is: {otp}")
+
+    return jsonify({"message": "OTP sent to email"}), 200
