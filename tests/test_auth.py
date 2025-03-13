@@ -147,3 +147,31 @@ def test_register_existing_email(client, mocker):
         ]
     }
 
+def test_register_existing_username(client, mocker):
+    mocker.patch("app.routes.auth_routes.generate_username", return_value="testuser")
+
+    user = User(email="test@example.com", username="testuser", password="hashedpassword")
+    db.session.add(user)
+    db.session.commit()
+
+    response = client.post("/register", json={
+        "data": {
+            "attributes": {
+                "email": "testing1@example.com",
+                "password": "securepassword"
+            }
+        }
+    })
+
+    assert User.query.count() == 1
+    assert response.status_code == 400
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Username is already in use, please retry your request",
+                "errorCode": "TFAE1",
+                "errorHandling": "Please provide a valid parameter."
+            }
+        ]
+    }
+
