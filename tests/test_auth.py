@@ -119,3 +119,31 @@ def test_register_invalid_email_format(client):
         ]
     }
 
+def test_register_existing_email(client, mocker):
+    mocker.patch("app.routes.auth_routes.generate_username", return_value="testuser")
+
+    user = User(email="test@example.com", username="testuser", password="hashedpassword")
+    db.session.add(user)
+    db.session.commit()
+
+    response = client.post("/register", json={
+        "data": {
+            "attributes": {
+                "email": "test@example.com",
+                "password": "securepassword"
+            }
+        }
+    })
+
+    assert User.query.count() == 1
+    assert response.status_code == 400
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Email already exists",
+                "errorCode": "TFAE1",
+                "errorHandling": "Please provide a valid parameter."
+            }
+        ]
+    }
+
