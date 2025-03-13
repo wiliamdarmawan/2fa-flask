@@ -1,5 +1,5 @@
 import pytest
-from app import create_app, db, bcrypt
+from app import create_app, db, bcrypt, limiter, redis_client
 from app.models import User
 from unittest.mock import patch
 from flask_jwt_extended import decode_token, create_access_token
@@ -21,6 +21,12 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    redis_client.flushall()
+    yield 
+    redis_client.flushall()
 
 def test_register_without_email(client):
     response = client.post("/register", json={
@@ -242,6 +248,42 @@ def test_login_with_wrong_password(client):
                 "errorHandling": "Please provide correct credentials"
             }
         ]
+    }
+
+def test_login_rate_limit(client, mocker):
+    mocker.patch("app.routes.auth_routes.generate_otp", return_value="123456")
+    mocker.patch("app.routes.auth_routes.store_otp")
+    mocker.patch("app.routes.auth_routes.send_email.delay")
+
+    password = "securepassword"
+    user = User(email="test@example.com", username="testuser", password=bcrypt.generate_password_hash(password).decode("utf-8"))
+    db.session.add(user)
+    db.session.commit()
+
+    data = {
+            "data": {
+                "attributes": {
+                    "email": "test@example.com",
+                    "password": password
+                }
+            }
+        }
+
+    for _ in range(5):
+        response = client.post("/login", json=data)
+        assert response.status_code == 200
+
+    response = client.post("/login", json=data)
+
+    assert response.status_code == 429
+    assert response.json == {
+        "errors": [
+            {
+                "error": "Rate limit exceeded",
+                "errorCode": "TFAE4",
+                "errorHandling": "Please wait before requesting another OTP",
+            },
+        ],
     }
 
 def test_login_success(client, mocker):
