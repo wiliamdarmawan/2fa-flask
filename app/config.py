@@ -1,5 +1,6 @@
 class Config:
     SQLALCHEMY_DATABASE_URI = "postgresql://root:root@db/2fa_db"
+    JWT_SECRET_KEY = "your_jwt_secret"
     SMTP_HOST = "smtp-relay.brevo.com"
     SMTP_PORT = 587
     SMTP_USERNAME = "87d572001@smtp-brevo.com"
